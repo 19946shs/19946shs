@@ -7,32 +7,26 @@
             <p>Add to cart feature</p>
             <p> and many more coming up soon</p>
         </div>
-        <!-- <div v-for="item in shirtList" :key="item.id">
-            <div :class="`${cssPrefix}__cards`">
-                <img :class="`${cssPrefix}__img`" :src="`assets/shirts/${item.id}.jpg`"/>
-                <div :class="`${cssPrefix}__details`">
-                    <h2>{{item.color}}</h2>
-                    <p>Description here</p>
-                    <p>Rs. {{item.price}}</p>
-                </div>
-            </div>
-        </div> -->
+        
     </div>
 </template>
 
 <style lang="scss">
+    // @font-face {
+    //     font-family: "Roboto";
+    //     src: local("Roboto"), url('/assets/fonts/Roboto/Roboto-Light.ttf') format('truetype');
+    // }
+    @import '@/theme/main.scss';
+    
     .slide_up_panel_secondary {
-        @font-face {
-            font-family: "roboto";
-            src: url('../Roboto-Light.ttf') format('truetype');
-        }
-
-
+        
 
         &__container {
             width: 100%;
+            max-width: 700px;
             height: 100% !important;
             display: block;
+            margin: auto;
         }
 
         &__slider {
@@ -46,13 +40,8 @@
             color: var(--ion-color-primary);
             border-top-left-radius: 20px;
             border-top-right-radius: 20px;
-            box-shadow: 0px 0px 20px 0px var(--ion-color-primary) ;
+            box-shadow: 0px 0px 20px 0px #000000 ;
             background: var(--ion-color-secondary);
-            font-family: "roboto", monospace, Arial, Helvetica, sans-serif;
-
-            p {
-                line-height: 0.2;
-            }
         }
 
         &__cards {

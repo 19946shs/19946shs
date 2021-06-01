@@ -1,0 +1,2 @@
+tshirt IDs - 16 digit alphanumeric: XXXXXXXXXXXXXXXX;
+identifiers: XXX-XXX-XX: Serial-Color-Size
