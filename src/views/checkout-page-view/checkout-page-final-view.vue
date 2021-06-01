@@ -1,12 +1,12 @@
 <template>
     <div :class="`${cssPrefix}__container` ">
-        <div :class="loaderActiveState || orderState || warningState ? `${cssPrefix}__title_blur` : `${cssPrefix}__title_bar`">
+        <div :class="loaderActiveState || orderState || warningState || addressFormState ? `${cssPrefix}__title_blur` : `${cssPrefix}__title_bar`">
           <img :class="`${cssPrefix}__icon`" id="previous_icon" src="assets/ui-buttons/previous.svg" @click="goBack"/>
         </div>
-        <div :class="loaderActiveState || warningState ? `${cssPrefix}__title_text_blur` : `${cssPrefix}__title_text_bar`">
+        <div :class="loaderActiveState || warningState || addressFormState ? `${cssPrefix}__title_text_blur` : `${cssPrefix}__title_text_bar`">
           <div :class="`${cssPrefix}__title_text`">CHECKOUT</div>
         </div>
-        <div :class="loaderActiveState || orderState || warningState ? `${cssPrefix}__content_blur` : `${cssPrefix}__content`">
+        <div :class="loaderActiveState || orderState || warningState || addressFormState ? `${cssPrefix}__content_blur` : `${cssPrefix}__content`">
            <div :class="`${cssPrefix}__cart_item`" v-for="item in cartItemsList" :key="item.id">
                <div :class="`${cssPrefix}__cart_item_inner`">
                    <div :class="`${cssPrefix}__cart_item_inner__text__container`">
@@ -20,7 +20,7 @@
                </div>
            </div>
         </div>
-        <div v-if="cartItemsList.length > 0" :class="loaderActiveState || orderState || warningState ? `${cssPrefix}__footer_blur` : `${cssPrefix}__footer`" @click="orderItems">
+        <div v-if="cartItemsList.length > 0" :class="loaderActiveState || orderState || warningState || addressFormState ? `${cssPrefix}__footer_blur` : `${cssPrefix}__footer`" @click="orderItems">
             <div :class="`${cssPrefix}__cart_item_inner`">
                 <div :class="`${cssPrefix}__cart_item_inner__checkout_text__container`" style="width: 100%">
                     <div style="display: flex; flex-direction: row; width: 100%; justify-content: space-between; vertical-align: middle">
@@ -39,7 +39,7 @@
         <preloader-component v-if="loaderActiveState"></preloader-component>
         <thank-you-card-component v-if="!loaderActiveState && orderState" :user="user" :height="400"></thank-you-card-component>
         <generic-popup-component v-if="!loaderActiveState && warningState && !orderState" :warningText="warningText" :height="400"></generic-popup-component>
-        <generic-popup-component v-if="!loaderActiveState && addressFormState && !orderState" :isAddress="true" :height="400"></generic-popup-component>
+        <generic-popup-component v-if="!loaderActiveState && addressFormState && !orderState" :isAddress="true" :height="400" @addressChanged="addressChanged"></generic-popup-component>
     </div>
 </template>
 
@@ -322,17 +322,18 @@ export default defineComponent({
             user: ('' as string | null),
             email: ('' as string | null),
             uid: ('' as string | null),
+            contact: ('' as string | null),
             orderState: false,
             warningState: false,
             warningText: 'Your cart is empty',
-            addressFormState: true
+            addressFormState: false
         }
     },
     watch: {
         isLoaded(truth) {
             this.warningState = !truth
             console.log('Eminem :: ', truth)
-        }
+        },
     },
     components: {
         PreloaderComponent,
@@ -447,6 +448,9 @@ export default defineComponent({
             this.$router.go(-1)
         },
         getCartItemsAndRemoveZeroUnitsFromList() {
+            this.phoneNumberRef.once('value', (snapshot: any) => {
+                snapshot.val() === null ? this.contact = '' : this.contact = snapshot.val()
+            })
             this.cartItemRef.once('value', (snapshot: any) => {
                 this.util.dispatch('changePreloaderActiveState', false)
                 let index = 0
@@ -482,74 +486,95 @@ export default defineComponent({
         orderItems() {
             this.util.dispatch('changePreloaderActiveState', true)
             firebase.auth().currentUser?.getIdToken(true).then((idToken) => {
-                axios.post(this.apiURL, {
-                    amount: this.totalPriceInCart * 100,
-                    currency: 'INR',
-                    receipt: Math.random().toString(36).replace('0.', '') + Math.random().toString(36).replace('0.', '').substring(0, 1),
-                    token: idToken
-                }).then((response: any) => {
-                    this.util.dispatch('changePreloaderActiveState', false)
-                    if(response.data.error) {
-                        console.log('Venom :: ', response.data.error)
+                this.addressRef.once('value', (snapshot) => {
+                    if (snapshot.val() === null) {
+                        this.addressFormState = true
+                        this.util.dispatch('changePreloaderActiveState', false)
                     } else {
-                        const orderId = response.data.id
-                        const amount = response.data.amount * 100
-                        const receipt = response.data.receipt
-                        console.log('Venom :: ', response.data)
-                        const options = {
-                            "key": "rzp_test_J8P7BoDu7yqdjc", // Enter the Key ID generated from the Dashboard
-                            "amount": amount, // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
-                            "currency": "INR",
-                            "name": "Audacitee",
-                            "description": `Your receipt id is ${receipt}`,
-                            "image": "assets/icon/audaciteelogo.png",
-                            "order_id": orderId, //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
-                            "handler": (response: any) => {
-                                console.log('Billy Joel :: ', response)
-                                this.util.dispatch('changePreloaderActiveState', true)
-                                this.orderedItemRef.on('child_added', (snapshot) => {
-                                    if(snapshot.val().length !== 0) {
-                                        this.util.dispatch('changePreloaderActiveState', false)
-                                        console.log('Blue Oyster Cult :: ', snapshot)
-                                        this.orderState = true
-                                    }
-                                 })
-                            },
-                            "prefill": {
-                                "name": this.user,
-                                "email": this.email,
-                                "contact": ""
-                            },
-                            "notes": {
-                                "username": this.user,
-                                "userid": this.uid,
-                                "email": this.email,
-                                "receipt": receipt,
-                                "price": amount / 100,
-                                "address": "Audacitee, JP Nagar"
-                            },
-                            "theme": {
-                                "color": "#FEE715"
-                            } 
-                        }
+                        axios.post(this.apiURL, {
+                            amount: this.totalPriceInCart * 100,
+                            currency: 'INR',
+                            receipt: Math.random().toString(36).replace('0.', '') + Math.random().toString(36).replace('0.', '').substring(0, 1),
+                            token: idToken
+                        }).then((response: any) => {
+                            this.util.dispatch('changePreloaderActiveState', false)
+                            if(response.data.error) {
+                                console.log('Venom :: ', response.data.error)
+                            } else {
+                                const orderId = response.data.id
+                                const amount = response.data.amount * 100
+                                const receipt = response.data.receipt
+                                console.log('Venom :: ', response.data)
+                                const options = {
+                                    "key": "rzp_test_J8P7BoDu7yqdjc", // Enter the Key ID generated from the Dashboard
+                                    "amount": amount, // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+                                    "currency": "INR",
+                                    "name": "Audacitee",
+                                    "description": `Your receipt id is ${receipt}`,
+                                    "image": "assets/icon/audaciteelogo.png",
+                                    "order_id": orderId, //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+                                    "handler": (response: any) => {
+                                        console.log('Billy Joel :: ', response)
+                                        this.util.dispatch('changePreloaderActiveState', true)
+                                        this.orderedItemRef.on('child_added', (snapshot) => {
+                                            if(snapshot.val().length !== 0) {
+                                                this.util.dispatch('changePreloaderActiveState', false)
+                                                console.log('Blue Oyster Cult :: ', snapshot)
+                                                this.orderState = true
+                                            }
+                                         })
+                                    },
+                                    "prefill": {
+                                        "name": this.user,
+                                        "email": this.email,
+                                        "contact": this.contact
+                                    },
+                                    "notes": {
+                                        "username": this.user,
+                                        "userid": this.uid,
+                                        "email": this.email,
+                                        "receipt": receipt,
+                                        "price": amount / 100,
+                                        "address": "Audacitee, JP Nagar"
+                                    },
+                                    "theme": {
+                                        "color": "#FEE715"
+                                    } 
+                                }
 
-                        const rzp = new Razorpay(options)
-                        rzp.on('payment.failed', (response: any) => {
-                            alert(response.error.code);
-                            alert(response.error.description);
-                            alert(response.error.source);
-                            alert(response.error.step);
-                            alert(response.error.reason);
-                            alert(response.error.metadata.order_id);
-                            alert(response.error.metadata.payment_id);
-                        });
-                        rzp.open()
+                                const rzp = new Razorpay(options)
+                                rzp.on('payment.failed', (response: any) => {
+                                    alert(response.error.code);
+                                    alert(response.error.description);
+                                    alert(response.error.source);
+                                    alert(response.error.step);
+                                    alert(response.error.reason);
+                                    alert(response.error.metadata.order_id);
+                                    alert(response.error.metadata.payment_id);
+                                });
+                                rzp.open()
+                            }
+                        })
                     }
                 })
+                
             }).catch(error => {
                 console.log('Venom :: ', error)
             })
-        }
+        },
+        addressChanged(params: any) {
+            this.addressFormState = false
+            this.util.dispatch('changePreloaderActiveState', true)
+            let a: boolean
+            let b: boolean
+            let c: boolean
+            a = b = c = false
+            this.contact = params.phoneNumber
+            this.addressRef.child('address').set(params.address).then(() => { a = true; a && b && c === true ? this.orderItems() : console.log() })
+            this.addressRef.child('pincode').set(params.pincode).then(() => { b = true; a && b && c === true ? this.orderItems() : console.log() })
+            this.phoneNumberRef.set(params.phoneNumber).then(() => { c = true; a && b && c === true ? this.orderItems() : console.log() })
+            
+        },
     }
 })
 </script>

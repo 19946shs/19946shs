@@ -8,7 +8,7 @@
             <div :class="`${cssPrefix}__generic_button`"  @click="closePopup">Alright</div>
         </div>
         <div :class="`${cssPrefix}__popup`"  v-if="isAddress" :style="{height: '450px', width: this.width}">
-            <genericinnerpopup-component>
+            <genericinnerpopup-component @close="onAddressChange">
                 <slot name="address"></slot>
             </genericinnerpopup-component>
         </div>
@@ -114,6 +114,9 @@ export default defineComponent({
         }
     },
     methods: {
+        onAddressChange(params: any) {
+            this.$emit('addressChanged', params)
+        },
         closePopup() {
             this.$router.push('/home')
         },
