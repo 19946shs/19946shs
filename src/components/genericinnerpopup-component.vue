@@ -1,7 +1,7 @@
 <template v-slot:address>
     <div :class="`${cssPrefix}__address_container`">
         <form style="height: 100%; display: flex; flex-direction: column; justify-content: space-between" action="" @submit="checkForm">
-            <div>
+            <div style="height: 300px; overflow: auto">
                 <div class="input-group">
                     <input v-model="phone" type="number" required @focus="onPhoneNumberFocus">
                     <span class="highlight"></span>
@@ -66,7 +66,6 @@
 
     textarea {
         width: 300px;
-        height: 200px;
         border: none;
         display: block;
         font-size: 18px;
@@ -177,6 +176,11 @@
         width: 50%;
     }
 
+    textarea:focus ~ .bar:before,
+    textarea:focus ~ .bar:after {
+        width: 50%;
+    }
+
 
     .highlight {
         position: absolute;
@@ -189,6 +193,12 @@
     }
 
     input:focus ~ .highlight {
+        -webkit-animation: inputHighlighter 0.3s ease;
+        -moz-animation: inputHighlighter 0.3s ease;
+        animation: inputHighlighter 0.3s ease;
+    }
+
+    textarea:focus ~ .highlight {
         -webkit-animation: inputHighlighter 0.3s ease;
         -moz-animation: inputHighlighter 0.3s ease;
         animation: inputHighlighter 0.3s ease;

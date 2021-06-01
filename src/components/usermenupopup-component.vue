@@ -2,15 +2,17 @@
     <div :class="`${cssPrefix}__container`">
         <div :class="`${cssPrefix}__blur`" @click="closePopup"></div>
         <div :class="`${cssPrefix}__popup`" :style="{height: this.height, width: this.width}">
-            <div :class="`${cssPrefix}__menu`">
+            <div :class="`${cssPrefix}__menu`" style="overflow: auto" :style="{height: '250px'}">
                 <div :class="`${cssPrefix}__menu_item`" @click="goToAccount">{{displayName}}</div>
                 <div :class="`${cssPrefix}__menu_item`" @click="ordereditems">Orders</div>
+                <div :class="`${cssPrefix}__menu_item`" @click="changeAddress">Change address</div>
                 <div :class="`${cssPrefix}__menu_item`" @click="goToBuyAgain">Buy again</div>
                 <div :class="`${cssPrefix}__menu_item`" @click="goToWishlist">Wishlist</div>
                 <div :class="`${cssPrefix}__menu_item`" @click="goToEnquiry">Enquiry</div>
                 <div :class="`${cssPrefix}__menu_item`" @click="logout">Log out</div>
             </div>
         </div>
+        <generic-popup-component style="z-index: 99" v-if="addressFormState" :isAddress="true" :height="400" @addressChanged="addressChanged"></generic-popup-component>
         <div class="close_button" @click="closePopup">
             <img src="assets/ui-buttons/close-button.svg"/>
         </div>
@@ -71,6 +73,8 @@
         &__menu_item {
             width: 100%;
             margin-bottom: 20px;
+            font-family: 'RobotoMono', monospace;
+            font-weight: normal;
         }
         
     }
@@ -82,9 +86,13 @@ import util from '@/store/util'
 import { defineComponent } from 'vue'
 import firebase from 'firebase'
 import { firebaseConfig } from '@/variables/variables'
+import GenericPopupComponent from '@/components/genericpopup-component.vue'
 
 export default defineComponent({
     name: 'UserMenuPopupComponent',
+    components: {
+        GenericPopupComponent
+    },
     props: {
         height: { required: true, default: '625px' },
         width: { required: true, default: '350px' },
@@ -102,7 +110,25 @@ export default defineComponent({
             set: (payload: any) => {
               store.dispatch('changeTemporaryItem', payload)
             }
-        }
+        },
+
+        addressRef: {
+            get() {
+                return firebase.database().ref(`users/${localStorage.getItem('uid')}/address`)
+            },
+            set() {
+                console.log()
+            }
+        },
+
+        phoneNumberRef: {
+            get() {
+                return firebase.database().ref(`users/${localStorage.getItem('uid')}/phonenumber`)
+            },
+            set() {
+                console.log()
+            }
+        },
     },
     data() {
         return {
@@ -110,6 +136,7 @@ export default defineComponent({
             store: store,
             util: util,
             displayName: '',
+            addressFormState: false,
             user_: {
                 uid: '',
                 photoUrl: '',
@@ -140,6 +167,9 @@ export default defineComponent({
         ordereditems() {
             this.$router.push('/ordereditems')
         },
+        changeAddress() {
+            this.addressFormState = true
+        },
         goToBuyAgain() {
             console.log('Missy Elliot:: clicked')
         },
@@ -158,6 +188,20 @@ export default defineComponent({
                 this.closePopup()
                 console.log(error)
             })
+        },
+        addressChanged(params: any) {
+            this.addressFormState = false
+            this.util.dispatch('changePreloaderActiveState', true)
+            let a: boolean
+            let b: boolean
+            let c: boolean
+            a = b = c = false
+            this.addressRef.child('address').set(params.address).then(() => { a = true; a && b && c === true ? this.onAddressChange() : console.log() })
+            this.addressRef.child('pincode').set(params.pincode).then(() => { b = true; a && b && c === true ? this.onAddressChange() : console.log() })
+            this.phoneNumberRef.set(params.phoneNumber).then(() => { c = true; a && b && c === true ? this.onAddressChange() : console.log() })
+        },
+        onAddressChange() {
+            this.util.dispatch('changePreloaderActiveState', true)
         }
     }
 })
