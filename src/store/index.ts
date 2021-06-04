@@ -10,6 +10,7 @@ const store = new Vuex.Store({
     loggedIn: false,
     popupActive: false,
     temporaryItem: null,
+    isNewUser: false
   },
   mutations: {
     login (state, payload) {
@@ -27,11 +28,14 @@ const store = new Vuex.Store({
       state.loggingIn = false
     },
     changePopupState (state) {
-        state.popupActive = !state.popupActive
+      state.popupActive = !state.popupActive
     },
     changeTemporaryItem(state, payload) {
-        state.temporaryItem = payload
-    } 
+      state.temporaryItem = payload
+    },
+    changeIsNewUser(state, payload) {
+      state.isNewUser = payload
+    }
   },
   actions: {
     attemptLoginAction(context) {
@@ -56,6 +60,9 @@ const store = new Vuex.Store({
     },
     changeTemporaryItem(context, payload) {
       context.commit('changeTemporaryItem', payload)
+    },
+    changeIsNewUser(context, payload) {
+      context.commit('changeIsNewUser', payload)
     }
   },
   getters: {
@@ -72,7 +79,10 @@ const store = new Vuex.Store({
       return state.popupActive
     },
     getTemporaryItem: (state) => {
-        return state.temporaryItem
+      return state.temporaryItem
+    },
+    getIsNewUser: (state) => {
+      return state.isNewUser
     }
   }
 })

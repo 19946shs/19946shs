@@ -22,6 +22,7 @@
         <div class="close_button" @click="closePopup">
             <img src="assets/ui-buttons/close-button.svg"/>
         </div>
+        <generic-popup-component v-if="showTutorial" :isTutorial="showTutorial" :tutorialTexts="[addToCartTutorial, addToCartTutorial2, accessCartTutorial, accessCartTutorial2]" @tutorialAlright="tutorialAlright" :height="'400px'"></generic-popup-component>
     </div>
 </template>
 
@@ -30,7 +31,7 @@
 
     .popup-component {
         &__container {
-            top: 20px;
+            top: 0px;
             height: 100%;
             width: 100%;
             position: fixed;
@@ -126,7 +127,7 @@
         }
     }
 
-    @media only screen and (max-height: 670px) {
+    @media only screen and (max-height: 600px) {
         .popup-component__img {
             height: 180px;
             width: 180px;
@@ -154,11 +155,15 @@ import util from '@/store/util'
 import { defineComponent } from 'vue'
 import CounterComponent from '@/components/counter-component.vue'
 import SizesComponent from '@/components/sizes-component.vue'
+import GenericPopupComponent from '@/components/genericpopup-component.vue'
+import { firebaseConfig } from '@/variables/variables'
+import firebase from 'firebase'
 
 export default defineComponent({
     name: 'PopupComponent',
     components: {
         // CounterComponent,
+        GenericPopupComponent,
         SizesComponent
     },
     props: {
@@ -192,7 +197,82 @@ export default defineComponent({
             set: (width: any) => {
                 console.log(width)
             }
+        },
+
+        showTutorialRef: {
+            get: () => {
+                return firebase.database().ref(`users/${localStorage.getItem('uid')}/isShowTutorial`)
+            },
+            set: () => {
+                console.log()
+            }
+        },
+
+        popupActiveState: {
+            get: () => {
+                return store.getters.popupActiveState
+            },
+            set: () => {
+                store.dispatch('changePopupState')
+            }
+        },
+
+        orderedItemRef: {
+            get() {
+                return firebase.database().ref(`users/${localStorage.getItem('uid')}/ordered_items`)
+            },
+            set() {
+                console.log()
+            }
+        },
+    },
+    mounted() {
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
         }
+
+        firebase.auth().onAuthStateChanged((user) => {
+            if(user) {
+                console.log()
+            } else {
+                this.$router.push('/login')
+            }
+        })
+
+        this.showTutorialRef.once('value', (snapshot) => {
+            console.log('Judas Priest :: ', snapshot.val())
+            if (snapshot.val() !== null) {
+                this.showTutorial = snapshot.val()
+            }
+        })
+
+        // window.onpopstate = (event: any) => {
+        //     console.log(this.popupActiveState)
+        //     const r = confirm('You sure?')
+        //     if (this.popupActiveState) {
+        //         store.dispatch('changePopupState')
+        //         history.pushState(null, '', window.location.pathname)
+        //     } else {
+        //         history.back()
+        //     }
+        //     history.pushState(null, '', window.location.pathname)
+        // }
+
+        // window.addEventListener('popstate', () => {
+        //     const r = confirm("You pressed a Back button! Are you sure?!");
+
+        //     if (r == true) {
+        //         // Call Back button programmatically as per user confirmation.
+        //         history.back();
+        //         // Uncomment below line to redirect to the previous page instead.
+        //         // window.location = document.referrer // Note: IE11 is not supporting this.
+        //     } else {
+        //         // Stay on the current page.
+        //         history.pushState(null, '', '/home');
+        //     }
+
+        //     history.pushState(null, '', '/home');
+        // })
     },
     data() {
         return {
@@ -200,7 +280,12 @@ export default defineComponent({
             store: store,
             util: util,
             isDetails: false,
+            addToCartTutorial: 'Click on the "+" icon to add item to cart',
+            addToCartTutorial2: 'Click on the "-" icon to remove item from cart',
+            accessCartTutorial: 'To access the cart, close pop up and click on the cart icon on the top right corner', 
+            accessCartTutorial2: 'Click or tap outside to close the popup', 
             detailsButtonText: 'Details',
+            showTutorial: false,
             cartItems: [{
                 
             }]
@@ -223,6 +308,10 @@ export default defineComponent({
 
         handleCountChange() {
             console.log()
+        },
+        tutorialAlright(params: any) {
+            this.showTutorial = false
+            if(!params.isShowAgain) this.showTutorialRef.set(false)
         }
     }
 })

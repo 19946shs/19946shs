@@ -3,7 +3,11 @@
         <div :class="`${cssPrefix}__blur`" @click="closePopup"></div>
         <div :class="`${cssPrefix}__popup`" :style="{height: this.height, width: this.width}">
             <div :class="`${cssPrefix}__thankyou`">
-                Thank you for having the Audacitee to buy from us, {{user}}. You're awesome :)
+                Your order will be delivered on or before&nbsp; <span>{{estDelivery}}</span>
+            </div>
+            <br>
+            <div :class="`${cssPrefix}__thankyou`">
+                Thank you for having the Audacitee to shop with us, {{user}}. You're awesome :)
             </div>
             <div :class="`${cssPrefix}__thankyou_smileys`" >
                 <div :class="`${cssPrefix}__icon`"><img src="assets/ui-buttons/smile.svg" alt="smile" @click="closePopup(1)"></div>
@@ -77,6 +81,10 @@
         }
 
         &__thankyou {
+            span {
+                font-weight: bold;
+                font-family: 'RobotoMono-Bold', monospace;
+            }
         }
 
         &__thankyou_smileys {
@@ -100,7 +108,8 @@ export default defineComponent({
     props: {
         height: { required: true, default: '625px' },
         width: { required: true, default: '350px' },
-        user: { required: true, default: '' }
+        user: { required: true, default: '' },
+        estDelivery : { required: true, default: '' }
     },
     computed: {
         item: {

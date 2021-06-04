@@ -1,5 +1,5 @@
 <template>
-    <div @click="onClick" :id="`${cssPrefix}__button`" :style="{height: this.height, width: this.width}">{{buttonText}}</div>
+    <div @click="onClick" :id="`${cssPrefix}__button`">{{buttonText}}</div>
 </template>
 
 <style lang="scss">
@@ -7,7 +7,7 @@
         &__button {
             width: 100px;
             height: 40px;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             text-align: center;
             position: relative !important;

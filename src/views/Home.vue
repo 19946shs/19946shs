@@ -38,6 +38,8 @@ import SlideUpPanel from './slide-up-panel-view/slide_up_component.vue'
 import SlideUpPanelSecondary from './slide-up-panel-view-secondary/slide_up_component_secondary.vue'
 import UserMenuPopupComponent from '@/components/usermenupopup-component.vue'
 import PreloaderComponent from '@/components/preloader-component.vue'
+import { useRoute } from 'vue-router'
+import {version} from '../../package.json';
 
 export default defineComponent({
   name: 'Home',
@@ -146,6 +148,17 @@ export default defineComponent({
         return item > 0
       }) ? this.util.dispatch('toggleIsLoaded', true) : this.util.dispatch('toggleIsLoaded', false)
     })
+    // if(this.$route.params.isNewUser) {
+        // this.showTutorialRef.set(true)
+    // }
+
+    const route = useRoute()
+    window.caches.keys().then(res => {
+      console.log('Pearl Jam :: ', res)
+    })
+    if(this.store.getters.getIsNewUser) {
+      firebase.database().ref(`users/${this.user.uid}/isShowTutorial`).set(true)
+    }
   },
   methods: {
     toggleMenu() {

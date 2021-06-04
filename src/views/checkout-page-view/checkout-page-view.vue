@@ -50,7 +50,7 @@
             </div>
         </div>
         <preloader-component v-if="loaderActiveState"></preloader-component>
-        <generic-popup-component v-if="!loaderActiveState && warningState" :warningText="warningText" :height="400"></generic-popup-component>
+        <generic-popup-component v-if="!loaderActiveState && warningState" :primaryDisplayText="warningText" :height="'200px'"></generic-popup-component>
     </div>
 </template>
 

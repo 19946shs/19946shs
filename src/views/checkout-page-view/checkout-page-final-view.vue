@@ -37,8 +37,8 @@
             </div>
         </div>
         <preloader-component v-if="loaderActiveState"></preloader-component>
-        <thank-you-card-component v-if="!loaderActiveState && orderState" :user="user" :height="400"></thank-you-card-component>
-        <generic-popup-component v-if="!loaderActiveState && warningState && !orderState" :warningText="warningText" :height="400"></generic-popup-component>
+        <thank-you-card-component v-if="!loaderActiveState && orderState" :estDelivery="estDelivery" :user="user" :height="400"></thank-you-card-component>
+        <generic-popup-component v-if="!loaderActiveState && warningState && !orderState" :primaryDisplayText="warningText" :height="400"></generic-popup-component>
         <generic-popup-component v-if="!loaderActiveState && addressFormState && !orderState" :isAddress="true" :height="400" @addressChanged="addressChanged"></generic-popup-component>
     </div>
 </template>
@@ -326,7 +326,8 @@ export default defineComponent({
             orderState: false,
             warningState: false,
             warningText: 'Your cart is empty',
-            addressFormState: false
+            addressFormState: false,
+            estDelivery: ''
         }
     },
     watch: {
@@ -516,13 +517,17 @@ export default defineComponent({
                                     "handler": (response: any) => {
                                         console.log('Billy Joel :: ', response)
                                         this.util.dispatch('changePreloaderActiveState', true)
-                                        this.orderedItemRef.on('child_added', (snapshot) => {
+                                        
+                                        this.orderedItemRef.orderByChild('id').limitToLast(1).once('child_added', (snapshot) => {
                                             if(snapshot.val().length !== 0) {
                                                 this.util.dispatch('changePreloaderActiveState', false)
-                                                console.log('Blue Oyster Cult :: ', snapshot)
+                                                const date = new Date()
+                                                date.setDate(new Date(snapshot.val().date).getDate() + 7)
+                                                const displayDate = date.toString().split(' ')
                                                 this.orderState = true
+                                                this.estDelivery = `${displayDate[0]}, ${displayDate[1]} ${displayDate[2]}`
                                             }
-                                         })
+                                        })
                                     },
                                     "prefill": {
                                         "name": this.user,

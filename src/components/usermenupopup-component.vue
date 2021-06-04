@@ -24,7 +24,7 @@
 
     .usermenupopup-component {
         &__container {
-            top: 20px;
+            top: 0px;
             height: 100%;
             width: 100%;
             position: fixed;

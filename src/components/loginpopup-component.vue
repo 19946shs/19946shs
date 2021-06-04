@@ -10,6 +10,7 @@
                 LOGIN
             </div> -->
         </div>
+        <generic-popup-component v-if="warningState && isLoginClick" :primaryDisplayText="warningText" :height="'200px'"></generic-popup-component>
         <preloader-component v-if="loaderActiveState"></preloader-component>
     </ion-app>
 </template>
@@ -82,9 +83,9 @@ import firebase from 'firebase';
 import router from '@/router'
 import PreloaderComponent from '@/components/preloader-component.vue'
 import { IonApp } from '@ionic/vue';
-import { user } from '@/variables/variables'
 import { firebaseConfig } from '@/variables/variables'
 import AudButtonPrimary from '@/components/ui-components/aud-button-primary.vue'
+import GenericPopupComponent from '@/components/genericpopup-component.vue'
 
 require('dotenv/config')
 
@@ -93,7 +94,8 @@ export default defineComponent({
     components: {
         IonApp,
         PreloaderComponent,
-        AudButtonPrimary
+        AudButtonPrimary,
+        GenericPopupComponent
     },
     props: {
         height: { required: true, default: '625px' },
@@ -125,7 +127,9 @@ export default defineComponent({
             store: store,
             util: util,
             router: router,
-            userref: user
+            isLoginClick: false,
+            warningState: false,
+            warningText: ''
         }
     },
     mounted() {
@@ -133,12 +137,12 @@ export default defineComponent({
         if (!firebase.apps.length) {
           firebase.initializeApp(firebaseConfig);
         }
-        console.log('LL Cool J:: ', this.$route.params)
         firebase.auth()
         .getRedirectResult()
         .then((result: any) => {
-            const credential: firebase.auth.OAuthCredential = result.credential;
+            this.warningState = false;
 
+            const credential: firebase.auth.OAuthCredential = result.credential;
             const token = credential.accessToken;
             
             // // The signed-in user info.
@@ -149,27 +153,32 @@ export default defineComponent({
                 email: user.email
 
             })
-            const ref = firebase.database().ref(`users/`)
-            ref.once('value').then((snapshot) => {
-                console.log('Darude:: ', snapshot.hasChild(user.uid))
-                ref.update({[user.uid]: this.userref})
-            })
+
+            console.log('Metallica :: ', result.additionalUserInfo.isNewUser)
+
+            // if(result.additionalUserInfo.isNewUser) {
+            //     firebase.database().ref(`users/${user.uid}/isShowTutorial`).set(true)
+            // }
+            this.store.dispatch('changeIsNewUser', result.additionalUserInfo.isNewUser)
 
             window.localStorage.setItem('displayName', JSON.stringify(user.displayName))
             window.localStorage.setItem('email', JSON.stringify(user.email))
             window.localStorage.setItem('photoURL', JSON.stringify(user.photoURL))
             window.localStorage.setItem('uid', JSON.stringify(user.uid))
             window.localStorage.setItem('token', JSON.stringify(token))
+            window.localStorage.setItem('isNewUser', JSON.stringify(result.additionalUserInfo.isNewUser))
             this.util.dispatch('changePreloaderActiveState', false)
-            if (this.$route.params.nextUrl?.toString()) this.$router.push({ path: this.$route.params.nextUrl?.toString() })
-            else if (this.$route.params.openMenu?.toString() === 'yeah') this.$router.push({ path: '/home', params: { openMenu: 'yeah' } })
-            else this.$router.push('/')
-
+            // if (this.$route.params.nextUrl?.toString()) this.$router.push({ path: this.$route.params.nextUrl?.toString() })
+            // else if (this.$route.params.openMenu?.toString() === 'yeah') this.$router.push({ path: '/home', params: { openMenu: 'yeah' } })
+            // else this.$router.push('/')
+            this.$router.push({ path: '/home', params: { isNewUser: result.additionalUserInfo.isNewUser } })
         }).catch((error) => {
             const errorCode = error.code;
             const errorMessage = error.message;
             const email = error.email;
             const credential = error.credential;
+            this.warningState = false;
+            this.warningText = `${errorCode} :: ${errorMessage} :: ${email}`
             this.store.dispatch('finishAttemptLoginAction')
             console.log('Ice Cube:: ', error)
             this.util.dispatch('changePreloaderActiveState', false)
@@ -181,6 +190,7 @@ export default defineComponent({
         },
 
         login() {
+            // this.isLoginClick = true
             this.util.dispatch('changePreloaderActiveState', true)
             if(!this.store.getters.loggingIn) {
                 const provider = new firebase.auth.GoogleAuthProvider()
